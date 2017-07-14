@@ -1,0 +1,2 @@
+cd ..\ApiClientGenerator
+dotnet run
