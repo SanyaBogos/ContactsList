@@ -26,7 +26,7 @@ namespace ApiClientGenerator
             var allClasses = generator.GetControllerClasses();
             //var necessaryClasses = allClasses.Except(allClasses.Where(x => excluded.Any(y => x.Contains(y)))
             //    ).ToArray();
-            var controllersToGenerate = new string[] { "Word", "Text", "File" };
+            var controllersToGenerate = new string[] { "File" };
             var necessaryClasses = allClasses.Where(x => controllersToGenerate.Any(y => x.Contains(y)))
                 .ToArray();
             var document = generator.GenerateForControllersAsync(necessaryClasses).Result;
@@ -40,7 +40,7 @@ namespace ApiClientGenerator
             var generatorApi = new SwaggerToTypeScriptClientGenerator(document, settingsForClientApiGeneration);
             var code = generatorApi.GenerateFile();
             code = ImproveGeneration(code);
-            File.WriteAllText(Path.Combine(currentFolder, "..", "Listening/Client/app", "apiDefinitions.ts"), code);
+            File.WriteAllText(Path.Combine(currentFolder, "..", "ContactsList/Client/app", "apiDefinitions.ts"), code);
         }
 
         private static string ImproveGeneration(string code)

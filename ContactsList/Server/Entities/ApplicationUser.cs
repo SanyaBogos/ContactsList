@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace ContactsList.Server.Entities
 {
@@ -24,5 +25,6 @@ namespace ContactsList.Server.Entities
             }
         }
 
+        public virtual ICollection<Contact> Contacts { get; set; }
     }
 }

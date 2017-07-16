@@ -1,3 +1,70 @@
-<p>
-  contacts-list works!
-</p>
+<div class="alert alert-info" role="alert">
+    <i class="fa fa-info-circle" aria-hidden="true"></i> Please upload xml file with contacts
+</div>
+
+<input class="btn" type="file" ng2FileSelect [uploader]="uploader" />
+<button class="btn" (click)="uploadFile()">Upload all</button>
+
+<div class="alert alert-danger" role="alert" *ngIf="errors && errors.length > 0">
+    <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+    <label *ngFor="let error of errors">
+        {{error}}
+    </label>
+</div>
+
+<div *ngIf="isSuccessTableVisible()">
+    <div class="alert alert-success" role="alert">
+        <i class="fa fa-check-circle" aria-hidden="true"></i> Successfully saved contacts
+    </div>
+
+    <table class="table">
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Address</th>
+        </tr>
+        <tr *ngFor="let contact of complexResult.successfullySaved">
+            <td>{{contact.name}}</td>
+            <td>{{contact.phone}}</td>
+            <td>
+                <label *ngIf="contact.index && contact.region && contact.city && contact.address">
+                    {{contact.index + ' ' + contact.region + ' ' + contact.city + ' ' + contact.address}}
+                </label>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div *ngIf="isIssuedTableVisible()">
+    <div class="alert alert-warning" role="alert" *ngIf="isWarnings() || isIssuedTableVisible()">
+        <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+        <label *ngIf="isIssuedTableVisible()">
+            One or more contacts haven't been saved
+        </label>
+
+        <label *ngFor="let warning of warnings">
+            {{warning}}
+        </label>
+    </div>
+
+    <table class="table">
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Issues</th>
+        </tr>
+        <tr *ngFor="let contact of complexResult.issuedElements">
+            <td>{{contact.name}}</td>
+            <td>{{contact.phone}}</td>
+            <td>
+                <label *ngIf="contact.index && contact.region && contact.city && contact.address">
+                    {{contact.index + ' ' + contact.region + ' ' + contact.city + ' ' + contact.address}}
+                </label>
+            </td>
+            <td>
+                <label *ngFor="let message of contact.issuedColumns">{{message}}</label>
+            </td>
+        </tr>
+    </table>
+</div>

@@ -15,9 +15,12 @@ import { routing } from './app.routes';
 import { AppService } from './app.service';
 import { appReducer } from './app-store';
 import { AppComponent } from './app.component';
+import { ErrorHandler } from "./apiDefinitions";
+// import { FileUploadModule } from "ng2-file-upload";
+// import { FileSelectDirective, FileUploader } from "ng2-file-upload";
 
 @NgModule({
-    declarations: [AppComponent],
+    declarations: [AppComponent /*, FileSelectDirective, FileUploader*/],
     imports: [
         BrowserAnimationsModule,
         BrowserModule,
@@ -31,9 +34,10 @@ import { AppComponent } from './app.component';
         StoreModule.provideStore(appReducer),
         StoreDevtoolsModule.instrumentOnlyWithExtension(),
         TranslateModule.forRoot({ loader: { provide: TranslateLoader, useClass: ApiTranslationLoader } })
+        // ,FileUploadModule
     ],
     providers: [
-        AppService
+        AppService, ErrorHandler
     ],
     bootstrap: [AppComponent]
 })

@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Net;
 using System.Threading.Tasks;
 using AspNet.Security.OpenIdConnect.Primitives;
+using AutoMapper;
+using ContactsList.Server.ViewModels.FileViewModels;
+using System;
 
 namespace ContactsList.Server.Extensions
 {
@@ -162,6 +165,33 @@ namespace ContactsList.Server.Extensions
             services.AddTransient<ISmsSender, SmsSender>();
             services.AddScoped<ApiExceptionFilter>();
             return services;
+        }
+
+        public static IServiceCollection RegisterContactsServices(this IServiceCollection services)
+        {
+            services.AddScoped<FileFormatService>();
+            return services;
+        }
+
+        public static IServiceCollection RegisterMapping(this IServiceCollection services)
+        {
+            Mapper.Initialize(x =>
+            {
+                x.CreateMap<ContactViewModel, Contact>()
+                    .ForMember(y => y.Name, opt => opt.MapFrom(s => RemoveEmptySpace(s.Name)))
+                    .ForMember(y => y.Index, opt => opt.MapFrom(s => RemoveEmptySpace(s.Index)))
+                    .ForMember(y => y.Region, opt => opt.MapFrom(s => RemoveEmptySpace(s.Region)))
+                    .ForMember(y => y.Address, opt => opt.MapFrom(s => RemoveEmptySpace(s.Address)))
+                    .ForMember(y => y.City, opt => opt.MapFrom(s => RemoveEmptySpace(s.City)));
+                    //.ForMember(y => y.Phone, opt => opt.MapFrom(s => FormatPhoneNumber(s.Phone)));
+            });
+            return services;
+        }
+
+        private static string RemoveEmptySpace(string str)
+        {
+            return string.Join(" ", str.Split(new char[] { ' ' },
+                                StringSplitOptions.RemoveEmptyEntries));
         }
     }
 }

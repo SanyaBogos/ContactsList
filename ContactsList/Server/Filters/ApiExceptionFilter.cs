@@ -2,64 +2,76 @@ using System;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace ContactsList.Server.Filters
 {
     public class ApiExceptionFilter : ExceptionFilterAttribute
     {
-        private ILogger<ApiExceptionFilter> _Logger;
+        private ILogger<ApiExceptionFilter> _logger;
 
         public ApiExceptionFilter(ILogger<ApiExceptionFilter> logger)
         {
-            _Logger = logger;
+            _logger = logger;
         }
 
 
         public override void OnException(ExceptionContext context)
         {
-            ApiError apiError = null;
+            string content = "";
+            var result = new ContentResult()
+            {
+                ContentType = "application/json"
+            };
+
             if (context.Exception is ApiException)
             {
                 // handle explicit 'known' API errors
                 var ex = context.Exception as ApiException;
                 context.Exception = null;
-                apiError = new ApiError(ex.Message);
-                apiError.errors = ex.Errors;
+                content = ConvertToJson(ex.Message);
+                context.HttpContext.Response.StatusCode = 400;
 
-                context.HttpContext.Response.StatusCode = ex.StatusCode;
-
-                _Logger.LogWarning($"Application thrown error: {ex.Message}", ex);
+                _logger.LogWarning($"Application thrown error: {ex.Message}", ex);
             }
             else if (context.Exception is UnauthorizedAccessException)
             {
-                apiError = new ApiError("Unauthorized Access");
+                // it`s not necessary to send any message to client (it knows issue by the status code)
                 context.HttpContext.Response.StatusCode = 401;
-                _Logger.LogWarning("Unauthorized Access in Controller Filter.");
+                _logger.LogWarning("Unauthorized Access in Controller Filter.");
             }
             else
             {
                 // Unhandled errors
 #if !DEBUG
-                var msg = "An unhandled error occurred.";
+                var msg = "";
                 string stack = null;
 #else
                 var msg = context.Exception.GetBaseException().Message;
                 string stack = context.Exception.StackTrace;
 #endif
 
-                apiError = new ApiError(msg);
-                apiError.detail = stack;
-
+                content = ConvertToJson(msg);
                 context.HttpContext.Response.StatusCode = 500;
 
                 // handle logging here
-                _Logger.LogError(new EventId(0), context.Exception, msg);
+                _logger.LogError(new EventId(0), context.Exception, context.Exception.Message);
             }
 
             // always return a JSON result
-            context.Result = new JsonResult(apiError);
+            result.Content = content;
+            context.Result = result;
 
             base.OnException(context);
+        }
+
+        private string ConvertToJson(string error)
+        {
+            return JsonConvert.SerializeObject(new string[] { error },
+                new JsonSerializerSettings
+                {
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                });
         }
     }
 }

@@ -21,6 +21,7 @@ import { UppercasePipe } from './pipes/uppercase.pipe';
 
 // Services
 import { ContentService } from './services/content.service';
+import { NotifficationsService } from "./services/notiffications.service";
 
 @NgModule({
   imports: [
@@ -42,7 +43,7 @@ import { ContentService } from './services/content.service';
     FooterComponent,
     HeaderComponent,
     PageHeadingComponent,
-    UppercasePipe
+    UppercasePipe,
   ],
   exports: [
     // Modules
@@ -60,7 +61,7 @@ import { ContentService } from './services/content.service';
     FooterComponent,
     HeaderComponent,
     PageHeadingComponent,
-    UppercasePipe
+    UppercasePipe,
   ]
 
 })
@@ -70,7 +71,8 @@ export class SharedModule {
       ngModule: SharedModule,
       providers: [
         FormControlService,
-        ContentService
+        ContentService,
+        NotifficationsService
       ]
     };
   }

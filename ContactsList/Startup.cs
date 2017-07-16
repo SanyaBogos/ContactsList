@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using ContactsList.Server;
 using ContactsList.Server.Extensions;
 using Swashbuckle.AspNetCore.Swagger;
+using Microsoft.AspNetCore.WebUtilities;
+using System.IO;
+using System;
 
 namespace ContactsList
 {
@@ -60,8 +63,14 @@ namespace ContactsList
 
             services.AddMemoryCache();
 
+            services.RegisterMapping();
+
             services.RegisterCustomServices();
 
+            services.RegisterContactsServices();
+
+            services.AddSingleton(provider => Configuration);
+            
             services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
             services.AddCustomizedMvc();
@@ -82,6 +91,51 @@ namespace ContactsList
             {
                 app.UseResponseCompression();
             }
+
+            app.Use(async (context, next) =>
+            {
+                if (!Helpers.IsMultipartContentType(context.Request.ContentType))
+                {
+                    await next();
+                    return;
+                }
+
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/logfile.txt");
+                if (File.Exists(path))
+                    File.AppendAllLines(path, new string[] { $"{DateTime.Now} Start streaming file" });
+
+                var boundary = Helpers.GetBoundary(context.Request.ContentType);
+                var reader = new MultipartReader(boundary, context.Request.Body);
+                var section = await reader.ReadNextSectionAsync();
+
+                while (section != null)
+                {
+                    // process each image
+                    const int chunkSize = 1024;
+                    var buffer = new byte[chunkSize];
+                    var bytesRead = 0;
+                    var fileName = Helpers.GetFileName(section.ContentDisposition);
+
+                    using (var stream = new FileStream($"wwwroot/files/{fileName}", FileMode.Append))
+                    {
+                        do
+                        {
+                            bytesRead = await section.Body.ReadAsync(buffer, 0, buffer.Length);
+                            stream.Write(buffer, 0, bytesRead);
+
+                        } while (bytesRead > 0);
+                    }
+
+                    section = await reader.ReadNextSectionAsync();
+                }
+
+                if (File.Exists(path))
+                    File.AppendAllLines(path, new string[] { $"{DateTime.Now} End streaming file" });
+
+                //await next();
+                //context.Response.WriteAsync("Done.");
+            });
+
 
             app.SetupMigrations();
 
