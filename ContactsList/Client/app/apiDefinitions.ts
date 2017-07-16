@@ -71,6 +71,52 @@ export class FileClient {
         this.baseUrl = baseUrl ? baseUrl : "";
     }
 
+    getContacts(): Observable<ContactViewModel[]> {
+        let url_ = this.baseUrl + "/api/File";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = "";
+        
+        let options_ = {
+            body: content_,
+            method: "get",
+            headers: new Headers({
+                "Content-Type": "application/json; charset=UTF-8", 
+                "Accept": "application/json; charset=UTF-8"
+            })
+        };
+
+        addXsrfToken(options_);
+        addAuthToken(options_);
+
+        return this.http.request(url_, options_).flatMap((response_) => {
+            return this.processGetContacts(response_);
+        }).catch((error: any) => {  
+            this.errorHandler.handleErrors(error);
+            return Observable.throw(error);
+        });
+    }
+
+    protected processGetContacts(response: Response): Observable<ContactViewModel[]> {
+        const status = response.status; 
+
+        if (status === 200) {
+            const responseText = response.text();
+            let result200: ContactViewModel[] = null;
+            let resultData200 = responseText === "" ? null : JSON.parse(responseText, this.jsonParseReviver);
+            if (resultData200 && resultData200.constructor === Array) {
+                result200 = [];
+                for (let item of resultData200)
+                    result200.push(ContactViewModel.fromJS(item));
+            }
+            return Observable.of(result200);
+        } else if (status !== 200 && status !== 204) {
+            const responseText = response.text();
+            return throwException("An unexpected server error occurred.", status, responseText);
+        }
+        return Observable.of<ContactViewModel[]>(<any>null);
+    }
+
     saveContacts(fileVM: FilesViewModel): Observable<ComplexResultViewModel> {
         let url_ = this.baseUrl + "/api/File";
         url_ = url_.replace(/[?&]$/, "");
@@ -112,6 +158,73 @@ export class FileClient {
         }
         return Observable.of<ComplexResultViewModel>(<any>null);
     }
+}
+
+export class ContactViewModel implements IContactViewModel {
+    name?: string;
+    phone?: string;
+    index?: string;
+    region?: string;
+    city?: string;
+    address?: string;
+    issuedColumns?: string[];
+
+    constructor(data?: IContactViewModel) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(data?: any) {
+        if (data) {
+            this.name = data["name"];
+            this.phone = data["phone"];
+            this.index = data["index"];
+            this.region = data["region"];
+            this.city = data["city"];
+            this.address = data["address"];
+            if (data["issuedColumns"] && data["issuedColumns"].constructor === Array) {
+                this.issuedColumns = [];
+                for (let item of data["issuedColumns"])
+                    this.issuedColumns.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): ContactViewModel {
+        let result = new ContactViewModel();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["phone"] = this.phone;
+        data["index"] = this.index;
+        data["region"] = this.region;
+        data["city"] = this.city;
+        data["address"] = this.address;
+        if (this.issuedColumns && this.issuedColumns.constructor === Array) {
+            data["issuedColumns"] = [];
+            for (let item of this.issuedColumns)
+                data["issuedColumns"].push(item);
+        }
+        return data; 
+    }
+}
+
+export interface IContactViewModel {
+    name?: string;
+    phone?: string;
+    index?: string;
+    region?: string;
+    city?: string;
+    address?: string;
+    issuedColumns?: string[];
 }
 
 export class FilesViewModel implements IFilesViewModel {
@@ -234,73 +347,6 @@ export interface IComplexResultViewModel {
     issuedElements?: ContactViewModel[];
     errorMessages?: string[];
     warningMessages?: string[];
-}
-
-export class ContactViewModel implements IContactViewModel {
-    name?: string;
-    phone?: string;
-    index?: string;
-    region?: string;
-    city?: string;
-    address?: string;
-    issuedColumns?: string[];
-
-    constructor(data?: IContactViewModel) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(data?: any) {
-        if (data) {
-            this.name = data["name"];
-            this.phone = data["phone"];
-            this.index = data["index"];
-            this.region = data["region"];
-            this.city = data["city"];
-            this.address = data["address"];
-            if (data["issuedColumns"] && data["issuedColumns"].constructor === Array) {
-                this.issuedColumns = [];
-                for (let item of data["issuedColumns"])
-                    this.issuedColumns.push(item);
-            }
-        }
-    }
-
-    static fromJS(data: any): ContactViewModel {
-        let result = new ContactViewModel();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["name"] = this.name;
-        data["phone"] = this.phone;
-        data["index"] = this.index;
-        data["region"] = this.region;
-        data["city"] = this.city;
-        data["address"] = this.address;
-        if (this.issuedColumns && this.issuedColumns.constructor === Array) {
-            data["issuedColumns"] = [];
-            for (let item of this.issuedColumns)
-                data["issuedColumns"].push(item);
-        }
-        return data; 
-    }
-}
-
-export interface IContactViewModel {
-    name?: string;
-    phone?: string;
-    index?: string;
-    region?: string;
-    city?: string;
-    address?: string;
-    issuedColumns?: string[];
 }
 
 export class SwaggerException extends Error {

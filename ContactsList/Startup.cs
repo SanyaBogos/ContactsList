@@ -8,6 +8,7 @@ using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.AspNetCore.WebUtilities;
 using System.IO;
 using System;
+using ContactsList.Server.Services;
 
 namespace ContactsList
 {
@@ -70,7 +71,7 @@ namespace ContactsList
             services.RegisterContactsServices();
 
             services.AddSingleton(provider => Configuration);
-            
+
             services.AddAntiforgery(options => options.HeaderName = "X-XSRF-TOKEN");
 
             services.AddCustomizedMvc();
@@ -100,13 +101,10 @@ namespace ContactsList
                     return;
                 }
 
-                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/logfile.txt");
-                if (File.Exists(path))
-                    File.AppendAllLines(path, new string[] { $"{DateTime.Now} Start streaming file" });
-
                 var boundary = Helpers.GetBoundary(context.Request.ContentType);
                 var reader = new MultipartReader(boundary, context.Request.Body);
                 var section = await reader.ReadNextSectionAsync();
+                //var newName = FileFormatService.GenerateUniqueFileName("wwwroot/files", fileName);
 
                 while (section != null)
                 {
@@ -129,8 +127,7 @@ namespace ContactsList
                     section = await reader.ReadNextSectionAsync();
                 }
 
-                if (File.Exists(path))
-                    File.AppendAllLines(path, new string[] { $"{DateTime.Now} End streaming file" });
+
 
                 //await next();
                 //context.Response.WriteAsync("Done.");

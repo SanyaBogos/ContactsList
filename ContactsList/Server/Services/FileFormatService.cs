@@ -102,6 +102,8 @@ namespace ContactsList.Server.Services
                 }
             }
 
+            DisposeFiles(fileVM.FileNames);
+
             return new ComplexResultViewModel()
             {
                 SuccessfullySaved = successContacts.ToArray(),
@@ -109,6 +111,16 @@ namespace ContactsList.Server.Services
                 ErrorMessages = errors.ToArray(),
                 WarningMessages = warnings.ToArray()
             };
+        }
+
+        private void DisposeFiles(string[] files)
+        {
+            foreach (var file in files)
+            {
+                var path = $"{_fileStoragePath}/{file}";
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
         }
 
         private FormatResult FormatPhoneNumber(string number)
@@ -237,5 +249,39 @@ namespace ContactsList.Server.Services
             return value;
         }
 
+        public static string GenerateUniqueFileName(string path, string fileName)
+        {
+            var filesInFolder = Directory.GetFiles(path);
+            filesInFolder = filesInFolder
+                .Select(x => x.Split('/').Last()).ToArray();
+
+            if (filesInFolder.Contains(fileName))
+                fileName = GenerateUniqueFileName(filesInFolder, fileName);
+
+            return fileName;
+        }
+
+        private static string GenerateUniqueFileName(string[] filesInFolder, string fileName)
+        {
+            var splitter = fileName.LastIndexOf('.');
+            var type = fileName.Substring(splitter, fileName.Length - splitter);
+            var name = fileName.Substring(0, splitter);
+            string newFileName;
+            var index = 0;
+            var additionalSymbolsCount = 1;
+
+            // this magic checks possible file name, tries 5 times to generate random symbols
+            // and increase random symbols count if no luck
+            do
+            {
+                newFileName = $"{name}{Helpers.GenerateRandomSymbols(additionalSymbolsCount)}{type}";
+                index++;
+                if (index % 5 == 0)
+                    additionalSymbolsCount++;
+            }
+            while (filesInFolder.Contains(newFileName));
+
+            return newFileName;
+        }
     }
 }

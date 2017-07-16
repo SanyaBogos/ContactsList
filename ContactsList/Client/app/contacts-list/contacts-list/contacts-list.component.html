@@ -1,3 +1,20 @@
+<table class="table" *ngIf="prevSavedContacts && prevSavedContacts.length > 0">
+    <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Address</th>
+    </tr>
+    <tr *ngFor="let contact of prevSavedContacts">
+        <td>{{contact.name}}</td>
+        <td>{{contact.phone}}</td>
+        <td>
+            <label *ngIf="contact.index && contact.region && contact.city && contact.address">
+                {{contact.index + ' ' + contact.region + ' ' + contact.city + ' ' + contact.address}}
+            </label>
+        </td>
+    </tr>
+</table>
+
 <div class="alert alert-info" role="alert">
     <i class="fa fa-info-circle" aria-hidden="true"></i> Please upload xml file with contacts
 </div>

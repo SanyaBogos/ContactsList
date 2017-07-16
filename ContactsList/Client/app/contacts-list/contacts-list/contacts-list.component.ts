@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { UploadService } from "../upload.service";
-import { FileClient, FilesViewModel, ComplexResultViewModel } from "../../apiDefinitions";
+import { FileClient, FilesViewModel, ComplexResultViewModel, ContactViewModel } from "../../apiDefinitions";
 import { FileUploader } from 'ng2-file-upload';
 
 @Component({
@@ -17,6 +17,7 @@ export class ContactsListComponent implements OnInit {
   private complexResult: ComplexResultViewModel;
   private errors: string[];
   private warnings: string[];
+  private prevSavedContacts: ContactViewModel[];
 
   constructor(
     public uploadService: UploadService,
@@ -26,6 +27,8 @@ export class ContactsListComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.fileClient.getContacts()
+      .subscribe(data => { this.prevSavedContacts = data; });
   }
 
   uploadFile() {
@@ -58,10 +61,13 @@ export class ContactsListComponent implements OnInit {
             if (self.complexResult.warningMessages)
               self.warnings = self.complexResult.warningMessages;
 
+            self.fileClient.getContacts()
+              .subscribe(data => { self.prevSavedContacts = data; });
+
             console.log(data);
           },
           err => {
-            self.errors = [err];
+            self.errors = [JSON.parse(err._body)];
             console.log(err);
           });
         clearInterval(interval);

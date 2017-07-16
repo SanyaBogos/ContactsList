@@ -60,21 +60,27 @@ namespace ContactsList.Server.Repositories
                                 @City, @Address)";
 
             using (var connection = Connection)
-            using (var tran = connection.BeginTransaction())
+            //using (var tran = connection.BeginTransaction())
             {
+                await connection.ExecuteAsync("BEGIN;");
                 foreach (var item in items)
                     await connection.ExecuteAsync(query, item);
-                tran.Commit();
+                await connection.ExecuteAsync("COMMIT;");
+                //tran.Commit();
             }
         }
 
-        public async Task Update(Contact item)
+        public async Task Update(IEnumerable<Contact> items)
         {
             using (var connection = Connection)
-            using (var tran = connection.BeginTransaction())
+            //using (var tran = connection.BeginTransaction())
             {
-                await connection.ExecuteAsync(
-                    @"update public.""Results"" 
+                await connection.ExecuteAsync("BEGIN;");
+                foreach (var item in items)
+                {
+
+                    await connection.ExecuteAsync(
+                        $@"update public.""{_tableName}"" 
                         set ""Name""=@Name, 
                             ""Phone""=@Phone, 
                             ""Index""=@Index,
@@ -82,8 +88,11 @@ namespace ContactsList.Server.Repositories
                             ""City""=@City,
                             ""Address""=@Address                            
                         where ""Id""=@Id",
-                    item);
-                tran.Commit();
+                        item);
+                }
+                await connection.ExecuteAsync("COMMIT;");
+
+                //tran.Commit();
                 //await connection.UpdateAsync(item);
             }
         }

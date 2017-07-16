@@ -57,5 +57,12 @@ namespace ContactsList.Server
                 .Trim('"');
         }
 
+        public static string GenerateRandomSymbols(int length)
+        {
+            var random = new Random(DateTime.Now.Millisecond);
+            const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
     }
 }

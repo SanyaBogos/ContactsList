@@ -17,6 +17,7 @@ using AspNet.Security.OpenIdConnect.Primitives;
 using AutoMapper;
 using ContactsList.Server.ViewModels.FileViewModels;
 using System;
+using ContactsList.Server.Repositories;
 
 namespace ContactsList.Server.Extensions
 {
@@ -170,6 +171,7 @@ namespace ContactsList.Server.Extensions
         public static IServiceCollection RegisterContactsServices(this IServiceCollection services)
         {
             services.AddScoped<FileFormatService>();
+            services.AddScoped<ContactRepository>();
             return services;
         }
 
@@ -182,7 +184,8 @@ namespace ContactsList.Server.Extensions
                     .ForMember(y => y.Index, opt => opt.MapFrom(s => RemoveEmptySpace(s.Index)))
                     .ForMember(y => y.Region, opt => opt.MapFrom(s => RemoveEmptySpace(s.Region)))
                     .ForMember(y => y.Address, opt => opt.MapFrom(s => RemoveEmptySpace(s.Address)))
-                    .ForMember(y => y.City, opt => opt.MapFrom(s => RemoveEmptySpace(s.City)));
+                    .ForMember(y => y.City, opt => opt.MapFrom(s => RemoveEmptySpace(s.City)))
+                    .ReverseMap();
                     //.ForMember(y => y.Phone, opt => opt.MapFrom(s => FormatPhoneNumber(s.Phone)));
             });
             return services;
