@@ -1,4 +1,5 @@
 ﻿using ContactsList.Server.Entities;
+using ContactsList.Server.Repositories.Abstract;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
@@ -10,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace ContactsList.Server.Repositories
 {
-    public class ContactRepository
+    public class ContactPostgresRepository: IContactRepository
     {
         private readonly string _tableName;
         private readonly string _connectionString;
 
-        public ContactRepository(IConfigurationRoot configuration)
+        public ContactPostgresRepository(IConfigurationRoot configuration)
         {
             _connectionString = configuration["Data:SqlPostegresConnectionString"];
             _tableName = $"{nameof(Contact)}s";
@@ -32,12 +33,12 @@ namespace ContactsList.Server.Repositories
         public async Task DeleteAllUserContact(int userId)
         {
             using (var connection = Connection)
-            using (var tran = connection.BeginTransaction())
             {
+                await connection.ExecuteAsync("BEGIN;");
                 await connection.ExecuteAsync(
                     $@"delete from public.""{_tableName}"" where ""UserId""=@UserId",
                         new { UserId = userId });
-                tran.Commit();
+                await connection.ExecuteAsync("COMMIT;");
             }
         }
 

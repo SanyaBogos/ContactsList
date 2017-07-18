@@ -20,6 +20,8 @@ using ContactsList.Server.Services;
 using ContactsList.Server.Repositories;
 using System.Linq;
 using AutoMapper;
+using ContactsList.Server.Services.Abstract;
+using ContactsList.Server.Repositories.Abstract;
 
 namespace ContactsList.Server.Controllers
 {
@@ -27,13 +29,13 @@ namespace ContactsList.Server.Controllers
     [Route("api/[controller]")]
     public class FileController : BaseController
     {
-        private readonly FileFormatService _fileFormatService;
-        private readonly ContactRepository _contactRepository;
+        private readonly IFileFormatService _fileFormatService;
+        private readonly IContactRepository _contactRepository;
 
         public FileController(
             UserManager<ApplicationUser> userManager,
-            FileFormatService fileFormatService,
-            ContactRepository contactRepository
+            IFileFormatService fileFormatService,
+            IContactRepository contactRepository
             )
             : base(userManager)
         {

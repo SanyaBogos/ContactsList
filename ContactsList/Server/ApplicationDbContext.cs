@@ -11,6 +11,7 @@ namespace ContactsList.Server
         public DbSet<Language> Languages { get; set; }
         public DbSet<Content> Content { get; set; }
         public DbSet<ContentText> ContentText { get; set; }
+        public DbSet<Contact> Contact { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         { }

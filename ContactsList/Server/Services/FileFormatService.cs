@@ -1,4 +1,5 @@
 ﻿using ContactsList.Server.Filters.Exceptions;
+using ContactsList.Server.Services.Abstract;
 using ContactsList.Server.Services.ServiceModels;
 using ContactsList.Server.ViewModels.FileViewModels;
 using Microsoft.AspNetCore.Hosting;
@@ -14,23 +15,37 @@ using System.Threading.Tasks;
 
 namespace ContactsList.Server.Services
 {
-    public class FileFormatService
+    public class FileFormatService : IFileFormatService
     {
+        private const string NAME = "Name";
+        private const string PHONE = "Phone";
+        private const string INDEX = "Index";
+        private const string REGION = "Region";
+        private const string CITY = "City";
+        private const string ADDRESS = "Address";
+
+        private const string NO_NON_MANDATORY_FIELD_WARN = "Some of non mandatory fields are not exist";
+
         private readonly string _fileStoragePath;
         private readonly string[] _allowedColumns;
         private readonly string[] _necessaryColumns;
         private readonly string[] _optionalColumns;
-
-        private const string NO_NON_MANDATORY_FIELD_WARN = "Some of non mandatory fields are not exist";
+        private readonly Dictionary<string, Func<BuildContactParams, string, string, string>> _formatActions;
 
         public FileFormatService(
             IConfigurationRoot configuration,
             IHostingEnvironment env)
         {
             _fileStoragePath = $"{env.WebRootPath}/{configuration["Data:FileStorage:Path"]}";
-            _allowedColumns = configuration["Data:AllowedColumns"].Split(';');
-            _necessaryColumns = configuration["Data:NecessaryColumns"].Split(';');
+            _allowedColumns = new string[] { NAME, PHONE, INDEX, REGION, CITY, ADDRESS };
+            _necessaryColumns = new string[] { NAME, PHONE };
             _optionalColumns = _allowedColumns.Except(_necessaryColumns).ToArray();
+
+            _formatActions = new Dictionary<string, Func<BuildContactParams, string, string, string>>
+            {
+                { PHONE, ProcessPhoneNumber },
+                { INDEX, ProcessIndex },
+            };
         }
 
         public ComplexResultViewModel GetContactsFromFile(FilesViewModel fileVM)
@@ -136,6 +151,8 @@ namespace ContactsList.Server.Services
                 prepared = $"7{prepared}";
             else if (prepared.Length > 11 || prepared.Length < 10)
                 return new FormatResult { IsSuccess = false, Value = "Incorrect digits count in phone number" };
+            else if (prepared.Length == 11 && !(prepared[0] == '7'))
+                return new FormatResult { IsSuccess = false, Value = "Incorrect country code in phone number" };
 
             return new FormatResult { IsSuccess = true, Value = prepared };
         }
@@ -147,18 +164,35 @@ namespace ContactsList.Server.Services
                 var val = param.Worksheet.Cells[param.Row, param.HeaderDictionary[column]]
                     .Value.ToString();
 
-                if (column.Equals("Phone"))
-                {
-                    var result = FormatPhoneNumber(val);
-                    if (!result.IsSuccess)
-                        param.ContactVM.IssuedColumns.Add(
-                            $"{result.Value}. Fix column:{GetColumnName(param.HeaderDictionary[column])}{param.Row} (row: {param.Row}, column: {param.HeaderDictionary[column]})");
-                    else
-                        val = result.Value;
-                }
+                if (_formatActions.Keys.Contains(column))
+                    val = _formatActions[column](param, val, column);
 
                 param.ContactVM.GetType().GetProperty(column).SetValue(param.ContactVM, val);
             }
+        }
+
+        private string ProcessIndex(BuildContactParams param, string val, string column)
+        {
+            if (!Regex.IsMatch(val, @"^\d{6}$"))
+                param.ContactVM.IssuedColumns.Add($"Incorrect index. Be sure, that there are 6 digits. Fix column: {GetColumnAddress(param, column)}");
+            return val;
+        }
+
+        private string ProcessPhoneNumber(BuildContactParams param, string val, string column)
+        {
+            var result = FormatPhoneNumber(val);
+            if (!result.IsSuccess)
+                param.ContactVM.IssuedColumns.Add(
+                    $"{result.Value}. Fix column: {GetColumnAddress(param, column)}");
+            else
+                val = result.Value;
+
+            return val;
+        }
+
+        private string GetColumnAddress(BuildContactParams param, string column)
+        {
+            return $"{GetColumnName(param.HeaderDictionary[column])}{param.Row} (row: {param.Row}, column: {param.HeaderDictionary[column]})";
         }
 
         private bool IsAddressValid(BuildContactParams param)

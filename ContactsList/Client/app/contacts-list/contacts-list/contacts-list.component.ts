@@ -62,13 +62,17 @@ export class ContactsListComponent implements OnInit {
               self.warnings = self.complexResult.warningMessages;
 
             self.fileClient.getContacts()
-              .subscribe(data => { self.prevSavedContacts = data; });
+              .subscribe(data => {
+                self.prevSavedContacts = data;
+                self.uploader.clearQueue();
+              });
 
             console.log(data);
           },
           err => {
             self.errors = [JSON.parse(err._body)];
             console.log(err);
+            self.uploader.clearQueue();
           });
         clearInterval(interval);
       }
